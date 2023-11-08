@@ -1,0 +1,32 @@
+# podroben postopek delovanja funkcije je opisan v drugem dokumentu
+# ustvarimo prazen sesznam, kamor bomo dodajali grafe diametra 2
+
+# z dodatno for zanko se bomo sprehodili po seznamih vozlišč na n ogljiščih
+# ker pogoj "diameter()" ne deluje na praznih grafih (brez povezav), je dodan pogoj,
+# ki preveri, ali je graf prazen (funkcija ".size()" == 0)
+
+# za dodatno analizo računske zahtevnosti so dodani podatki, ki izpisujejo, koliko
+#grafov je ustreznih glede na njihovo velikost. Podani so zakomentirano
+
+
+vsi_grafi_2_diameter = list()
+n = 10
+
+for i in range(n):
+    grafi_diameter_2_velikosti_i = list()
+    vsi_grafi_velikost_i = list(graphs(i))
+    for j in range(len(vsi_grafi_velikost_i)):
+        if vsi_grafi_velikost_i[j].size() == 0:
+            pass
+        else:
+            if vsi_grafi_velikost_i[j].diameter() == 2:
+                grafi_diameter_2_velikosti_i.append(vsi_grafi_velikost_i[j])
+    vsi_grafi_2_diameter.append(grafi_diameter_2_velikosti_i)
+    #print("pri velikosti")
+    #print(i)
+    #print("je grafov z diametrom dva:")
+    #print(len(grafi_diameter_2_velikosti_i))
+
+print("to so vsi grafi velikosti do 100 z diametrom 2:")
+print(len(vsi_grafi_2_diameter))
+︡
