@@ -1,0 +1,18 @@
+#program je namenjen iskanju vseh grafov na n vozliščih, ki imajo diameter dva
+
+n = 6                                                #izberemo število vozlišč, pri n=8 je vseh možnih grafov več kot 12000
+L = list(graphs(n))                                  # Naredimo seznam vseh grafov na n vozliščih
+l = len(L)                                           
+print(l)                                             
+graf_n_diameter_2 = list()                           #Seznam, kamor bomo spravljali grafe z diametrom 2
+for i in range(len(L)):                              #z zanko se zapeljemo po seznamu vseh grafov, kjer s pogojem izberemo 
+    L[i].show()                                      # tiste z diametrom 2 in jih dodamo v seznam z grafi diametra 2.
+    print("število povezav je :")
+    L[i].size()
+    print("zaporedno število grafa je :")            # Zraven si pri malih n lahko privoščimo ogled grafov in njihove lastnostini
+    print(i)
+    if L[i].diameter() == 2:
+        graf_n_diameter_2.append(L[i])
+print(len(graf_n_diameter_2))                        # Izpiše število grafov diametra dva
+
+# pri n = 8 Za to nalogo brez izpisaovanja in prikaza slik grafov porabi program več minut, za n = 9 pa sem zaenkrat obupal nad čakanjem
