@@ -1,4 +1,5 @@
-#
+︠9c7e3afd-50ed-4bf5-80a6-4e03451aa874︠
+
 # FINANČNI PRAKTIKUM 2023/24
 # Dominacijsko število grafov premera 2
 # Jošt Plevel in Martin Iglič
@@ -11,13 +12,13 @@ import random
 # Definiram funkcijo, ki generira povezan nepoln graf na n vozliščih.
 def generiraj_povezan_graf(n): # 4s za n = 100, 20s za n = 200.
     # Za graf premera dve potrebujemo veliko povezav, zato izberemo visoko verjetnost, da se med posameznima vozliščema ustvari povezava.
-    G = graphs.RandomGNP(n, 0.6)
+    G = graphs.RandomGNP(n, 0.8)
     if G.is_connected() == False:
         generiraj_povezan_graf(n)
     if G == graphs.CompleteGraph(n):
         generiraj_povezan_graf(n)
     G.show()
-    return(G)
+    return G
 
 # Ta funkcija vzame tabelo poti, ki jo vrne algoritem Floyd-Warshall, in vozlišči, ki sta si najbolj oddaljeni, in vrne pot med njima (kot seznam vmesnih vozlišč).
 def poisci_pot(poti, par):
@@ -36,62 +37,78 @@ def nakljucni_st(sez):
     st2 = random.randrange(len(sez))
     while st1 == st2 or abs(st1-st2)<2:
         st2 = random.randrange(len(sez))
-    return((sez[st1], sez[st2]))
+    return (sez[st1], sez[st2])
 
 # Funkcija vzame graf H, poišče vozlišči, ki sta si najdlje, in na njuni najkrajši poti doda še neobstoječo povezavo.
 def najdaljsa_pot_dodaj(H):
     razdalje, poti = sage.graphs.distances_all_pairs.floyd_warshall(H, True, True) # funkcija vrne najprej razdalje, nato poti. Poti so pravzaprav le predhodniki.
-    #print('Poti:')
-    #print(poti)
-    #print('Razdalje:')
-    #print(razdalje)
     razdalja = 0
     par = []
     for vozlisce in razdalje:
-        #
         slo = razdalje[vozlisce]
         # To je vozlišče, ki ga pregledujemo:
         koren = vozlisce
         # To je vozlišče z maksimalno razdaljo:
         m = max(slo, key=lambda key: slo[key])
-        #print('m:')
-        #print(m)
         # To je maks razdalja od danega vozlišča:
         razdaljav = slo[m]
-        #print('razdaljav:')
-        #print(razdaljav)
         # To je vozlišče, v katerem pride do te maks razdalje:
         ponor = m
         # Preverimo, če je to strogo najdaljša najkrajša pot, ki smo jo zaenkrat našli v grafu:
         if razdalja < razdaljav:
             # Če je, si zapomnimo njeno vrednost in vozlišči, ki sta na tej razdalji.
-            #print('Nov maks:')
-            #print(razdaljav)
             razdalja = razdaljav
             par = [koren, ponor]
     if razdalja > 2:
-        #print('znotraj dodajanja povezav:')
         pot = poisci_pot(poti, par)
-        #print(pot)
         nova_povezava = nakljucni_st(pot)
-        #print(nova_povezava)
         H.add_edge(nova_povezava)
-    return(H)
+    return H
 
 # Ta funkcija iterira graf in mu dodaja povezave na najdaljših poteh, dokler ta ni premera dve.
 def spremeni_v_premer_2(G):
     if G.diameter() == 2:
-        return(G)
+        return G
     else:
-        print(G.diameter())
         G2 = najdaljsa_pot_dodaj(G)
-        G2.show()
         spremeni_v_premer_2(G2)
 
+# Funkcija odstrani naključna vozlišča v grafu. Odstrani jih kvečjemu 10, morda pa tudi nič, vendar to v grafu z veliko povezavami ni tako verjetno.
+def odstrani_vozlisce(G):
+    n = G.order()
+    k = random.randrange(5, 10)
+    for i in range(k):
+        a = random.randrange(n)
+        b = random.randrange(n)
+        G.delete_edge((a, b))
+    return G
+
 ########## SKUPAJ #############
-def dom_st(n):
+def veliko_dom_st(n, k):
     G = generiraj_povezan_graf(n)
-    G2 = spremeni_v_premer_2(G)
-    print(G2.dominating_set)
-    st = G2.dominating_set(value_only=True)
-    return st
+    maks = 0
+    for i in range(k):
+        G = spremeni_v_premer_2(G)
+        st = G.dominating_set(value_only = True)
+        if st > maks:
+            maks = st
+            S = G
+            S1 = G.dominating_set()
+        G = odstrani_vozlisce(G)
+    print('Konec')
+    return maks, S, S1
+
+# ALTERNATIVNO:
+def veliko_dom_st2(n, k):
+    maks = 0
+    for i in range(k):
+        G = generiraj_povezan_graf(n)
+        G = spremeni_v_premer_2(G)
+        st = G.dominating_set(value_only = True)
+        if st > maks:
+            maks = st
+            S = G
+            S1 = G.dominating_set()
+    print('Konec')
+    return maks, S, S1
+
