@@ -1,24 +1,41 @@
-︠9c7e3afd-50ed-4bf5-80a6-4e03451aa874︠
-
 # FINANČNI PRAKTIKUM 2023/24
 # Dominacijsko število grafov premera 2
 # Jošt Plevel in Martin Iglič
 # Sledeči del pokriva iskanje dominacijskega števila na velikih grafih.
 
+# Program išče grafe premera 2 s čim večjim dominacijskim številom.
+# Uporaba: v zadnjih vrsticah uporabnik določi, koliko vozlišč naj imajo grafi, na katerih bo iskal dominacijsko število. Določiti mora tudi verjetnost,
+# da se pri generiranju naključnega grafa med poljubnim parom povezav ustvari povezava (več o smiselnosti tega sledi v naslednjih komentarjih).
+# program nato obvešča, koliko grafov je že pregledal, in vrne slovar grafa z njegovim pokritjem, če najde takega, ki ima strogo večje dominacijsko število od prejšnjega.
+# Pozor! Program je neskončna zanka.
+
 import random
 
 ############ DEFINIRANJE POMOŽNIH FUNKCIJ ##################
 
-# Definiram funkcijo, ki generira povezan nepoln graf na n vozliščih.
-def generiraj_povezan_graf(n): # 4s za n = 100, 20s za n = 200.
-    # Za graf premera dve potrebujemo veliko povezav, zato izberemo visoko verjetnost, da se med posameznima vozliščema ustvari povezava.
-    G = graphs.RandomGNP(n, 0.8)
+# Sledeča funkcija generira povezan nepoln graf. Verjetnost, da se med posameznima vozliščema ustvari povezava, je smiselno spreminjati v odvisnosti od n.
+# Namreč: za graf diametra dva je potrebno imeti precej povezav, vendar se v gostem grafu (npr. p = 0.8) težko zgodi, da bi bilo dominacijsko število večje od 2 ali 3.
+# Pri manjši pa so dom. števila tudi večja. Na podlagi izvedenih testov se je izkazalo, da je p = 0.2 precej primerna za n = 50, medtem ko za n = 20 pri tej verjetnosti graf
+# po nekaj iteracijah nadaljnje kode "skonvergira" v zvezdo in se neha spreminjati.
+def generiraj_povezan_graf(n, p):
+    G = graphs.RandomGNP(n, p)
     if G.is_connected() == False:
-        generiraj_povezan_graf(n)
+        generiraj_povezan_graf(n, p)
     if G == graphs.CompleteGraph(n):
-        generiraj_povezan_graf(n)
-    G.show()
+        generiraj_povezan_graf(n, p)
     return G
+
+# Spodaj je alternativen način definiranje funkcije, ki najprej ustvari drevo na n vozliščih, ki mu nato doda še druge naključne povezave. Za potrebe projekta se je zgornja
+# definicija zdela zadovoljiva in zato spodnja ni bila uporabljena.
+#def generiraj_povezan_graf(n): # 4s za n = 100, 20s za n = 200.
+#    K = graphs.RandomGNP(n, 0.2)
+#    H = graphs.RandomTree(n)
+#    graf = K.union(H)
+#    if graf == graphs.CompleteGraph(n):
+#        generiraj_povezan_graf(n)
+#    return graf
+
+
 
 # Ta funkcija vzame tabelo poti, ki jo vrne algoritem Floyd-Warshall, in vozlišči, ki sta si najbolj oddaljeni, in vrne pot med njima (kot seznam vmesnih vozlišč).
 def poisci_pot(poti, par):
@@ -31,7 +48,7 @@ def poisci_pot(poti, par):
         trenutni = sosedi.get(trenutni)
     return pot
 
-# Ta funkcija vrne dva naključna nesosednja elementa seznama kot množico.
+# Ta funkcija vrne dva naključna nesosednja elementa seznama kot množico. Torej bo določila, kje na najdaljši poti v grafu bo dodana povezava.
 def nakljucni_st(sez):
     st1 = random.randrange(len(sez))
     st2 = random.randrange(len(sez))
@@ -39,9 +56,13 @@ def nakljucni_st(sez):
         st2 = random.randrange(len(sez))
     return (sez[st1], sez[st2])
 
-# Funkcija vzame graf H, poišče vozlišči, ki sta si najdlje, in na njuni najkrajši poti doda še neobstoječo povezavo.
-def najdaljsa_pot_dodaj(H):
-    razdalje, poti = sage.graphs.distances_all_pairs.floyd_warshall(H, True, True) # funkcija vrne najprej razdalje, nato poti. Poti so pravzaprav le predhodniki.
+# Funkcija vzame graf, poišče vozlišči, ki sta si najdlje, in na njuni najkrajši poti doda še neobstoječo povezavo.
+def najdaljsa_pot_dodaj():
+    global G
+    razdalje, poti = sage.graphs.distances_all_pairs.floyd_warshall(G, True, True) # funkcija vrne najprej razdalje, nato poti oz. predhodnike
+    if G.is_connected() == False:
+        # GRAF NI POVEZAN! (Opomba: to se ne bi smelo zgoditi, vendar se v CoCalcu dogaja. Ne razumem zakaj, to spodaj je varovalka.)
+        G = generiraj_povezan_graf(n, p)
     razdalja = 0
     par = []
     for vozlisce in razdalje:
@@ -50,9 +71,9 @@ def najdaljsa_pot_dodaj(H):
         koren = vozlisce
         # To je vozlišče z maksimalno razdaljo:
         m = max(slo, key=lambda key: slo[key])
-        # To je maks razdalja od danega vozlišča:
+        # To je maksimalna razdalja od danega vozlišča:
         razdaljav = slo[m]
-        # To je vozlišče, v katerem pride do te maks razdalje:
+        # To je vozlišče, v katerem pride do te maksimalne razdalje:
         ponor = m
         # Preverimo, če je to strogo najdaljša najkrajša pot, ki smo jo zaenkrat našli v grafu:
         if razdalja < razdaljav:
@@ -62,53 +83,59 @@ def najdaljsa_pot_dodaj(H):
     if razdalja > 2:
         pot = poisci_pot(poti, par)
         nova_povezava = nakljucni_st(pot)
-        H.add_edge(nova_povezava)
-    return H
+        G.add_edge(nova_povezava)
+    return None
 
 # Ta funkcija iterira graf in mu dodaja povezave na najdaljših poteh, dokler ta ni premera dve.
-def spremeni_v_premer_2(G):
-    if G.diameter() == 2:
-        return G
-    else:
-        G2 = najdaljsa_pot_dodaj(G)
-        spremeni_v_premer_2(G2)
+def spremeni_v_premer_2():
+    global G
+    while G.diameter() != 2:
+        najdaljsa_pot_dodaj()
 
-# Funkcija odstrani naključna vozlišča v grafu. Odstrani jih kvečjemu 10, morda pa tudi nič, vendar to v grafu z veliko povezavami ni tako verjetno.
-def odstrani_vozlisce(G):
+# Funkcija odstrani naključna povezave v grafu. Odstrani jih kvečjemu 20, morda pa tudi nič,
+# vendar to pri velikem številu testiranih grafov ni bistveno (če je med več tisoč grafi nekaj enakih, to ni tak problem.)
+# Funckija preveri tudi, če bi odstranitev povezave pomenila, da graf razpade na dve komponenti, v tem primeru povezave ne odstrani.
+def odstrani_povezave():
+    global G
     n = G.order()
-    k = random.randrange(5, 10)
+    k = random.randrange(5, 20)
     for i in range(k):
         a = random.randrange(n)
         b = random.randrange(n)
-        G.delete_edge((a, b))
-    return G
+        if G.has_edge(a, b) == True:
+            if G.is_cut_edge(a, b) == False:
+                G.delete_edge((a, b))
+    return None
 
 ########## SKUPAJ #############
-def veliko_dom_st(n, k):
-    G = generiraj_povezan_graf(n)
+
+# Delovanje te funckije je opisano že v prvih vrsticah programa. Dodatni opombi sta to:
+# Graf se občasno spremeni v zvezdo in se nato ne spreminja več, ker ne more odstraniti povezav, ne da bi razpadel na več komponent,
+# hkrati pa je diametra dva. Zdi se dovolj, da se to popravi na vsakih 1000 grafov, čeprav je to v praksi seveda zelo odvisno tako od n kot od p.
+# Vsakič ko za dan n najdemo novo največje dom. število, ga funckija izpiše, skupaj s slovarjem (ter v CoCalcu tudi izrisom) in pokritjem grafa, ki mu dom. št. pripada.
+def veliko_dom_st():
+    global G
     maks = 0
-    for i in range(k):
-        G = spremeni_v_premer_2(G)
+    i = 0
+    while True:
+        i += 1
+        spremeni_v_premer_2()
         st = G.dominating_set(value_only = True)
         if st > maks:
             maks = st
             S = G
             S1 = G.dominating_set()
-        G = odstrani_vozlisce(G)
+            print(maks, S, S.to_dictionary(), S1)
+        if i % 1000 == 0:
+            print(f'Program je pregledal {i} grafov.')
+            print(f'Največje dominacijsko število je {maks}.')
+            G = generiraj_povezan_graf(n, p)
+        odstrani_povezave()
     print('Konec')
-    return maks, S, S1
+    return maks, S, S.to_dictionary(), S1
 
-# ALTERNATIVNO:
-def veliko_dom_st2(n, k):
-    maks = 0
-    for i in range(k):
-        G = generiraj_povezan_graf(n)
-        G = spremeni_v_premer_2(G)
-        st = G.dominating_set(value_only = True)
-        if st > maks:
-            maks = st
-            S = G
-            S1 = G.dominating_set()
-    print('Konec')
-    return maks, S, S1
 
+n = 
+p = 
+G = generiraj_povezan_graf(n, p)
+veliko_dom_st()
