@@ -1,0 +1,78 @@
+
+# FINANČNI PRAKTIKUM 2023/24
+# Dominacijsko število grafov premera 2
+# Jošt Plevel in Martin Iglič
+# Sledeči del pokriva iskanje dominacijskega števila na grafih do osem ogljišč.
+import random
+
+###################################################################################################################################################################################################################
+###################################################################################################################################################################################################################
+
+#funkcija vrne največje dominacijsko število za graf na n vozliščih
+
+def dominacijsko_stevilo_velikost_n_diameter_2 (n):
+    mnozica_grafov_diametra_2 = seznam_grafov_velikosti_n_diametra_2(n)
+    najvecje_dominacijsko_stevilo = maksimalno_dom_st(mnozica_grafov_diametra_2)
+    return(najvecje_dominacijsko_stevilo)
+
+
+
+# Ustvari vse povezane grafe in vrne tiste z diametrom 2 (v Cocalc deluje za n<9)
+
+def seznam_grafov_velikosti_n_diametra_2(n):
+    grafi_diameter_2_velikosti_i = list()
+    vsi_grafi_velikost_i = list(graphs.nauty_geng(f"{n} -c"))
+    for graf in vsi_grafi_velikost_i:
+        if graf.diameter() <= 2:
+            grafi_diameter_2_velikosti_i.append(graf)
+    return(grafi_diameter_2_velikosti_i)
+
+
+
+#Iz podanega seznama grafov vrne največje dominacijsko število
+
+def maksimalno_dom_st(seznam_grafov):
+    maksimalno_dominacijsko_stevilo = 0
+    for graf in seznam_grafov:
+        if graf.dominating_set(value_only=True) > maksimalno_dominacijsko_stevilo:
+            maksimalno_dominacijsko_stevilo = graf.dominating_set(value_only=True)
+    return(maksimalno_dominacijsko_stevilo)
+
+
+
+# Iz vseh grafov poišče največje dominacijsko število in vrne seznam vseh takih grafov
+
+def seznam_grafov_z_maks_dom_st(seznam_grafov_2_diameter):
+    seznam_grafov_z_maks_dom_st = list()
+    maksimalno_dominacijsko_stevilo = maksimalno_dom_st(seznam_grafov_2_diameter)
+    for graf in seznam_grafov_2_diameter:
+        if graf.dominating_set(value_only=True) == maksimalno_dominacijsko_stevilo:
+            seznam_grafov_z_maks_dom_st.append(graf)
+    return(seznam_grafov_z_maks_dom_st)
+
+
+
+#vrne in pokaže t primerov grafov z maksimalnim dominacijskim številom
+
+def podaj_t_primere_grafov_z_maks_dom_st(seznam_grafov_z_maks_dom_st, t = 3):
+    mnozica_primerov = random.choices(seznam_grafov_z_maks_dom_st, k = t)
+    for primer in mnozica_primerov:
+        primer.show()
+    return(mnozica_primerov)
+
+
+
+#funkcija vrne ubesedeno poročilo o številu grafov diametra dva, o maksimalnem dominacijskem številu, ter o številu vseh takih grafov pri n vozliščih. opomba: deluje za grafe na manjk kot n = 10 vozliščih v cocalc programu
+
+def povej_podatke_do_velikosti_n(n):
+    for st_vozlisc in range(1,n):
+        dominacijsko_stevilo =dominacijsko_stevilo_velikost_n_diameter_2(st_vozlisc)
+        stevilo_grafov_diamtera_2 = seznam_grafov_velikosti_n_diametra_2(st_vozlisc)
+        stevilo_grafov_dimatera_2_z_maks_dom_st = len(seznam_grafov_z_maks_dom_st(stevilo_grafov_diamtera_2))
+        izjava = f"Pri grafih na {st_vozlisc} vozliščih imamo {len(stevilo_grafov_diamtera_2)} grafov diamtera 2. V tej množici je največje dominacijsko število {dominacijsko_stevilo}, pri čemer je {stevilo_grafov_dimatera_2_z_maks_dom_st} grafov s tem dominacijskim številom."
+        print(izjava)
+
+
+
+
+povej_podatke_do_velikosti_n(9)
